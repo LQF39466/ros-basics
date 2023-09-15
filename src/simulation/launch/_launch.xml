@@ -1,0 +1,5 @@
+<launch>
+    <!-- 启动 rviz -->
+    <node pkg="rviz2" exec="rviz2" name="rviz2">
+    </node>
+</launch>
