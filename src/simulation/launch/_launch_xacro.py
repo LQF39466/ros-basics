@@ -1,6 +1,6 @@
 import os
 from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import DeclareLaunchArgument
@@ -8,11 +8,12 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     package_name = 'simulation'
-    urdf_name = 'mycar.urdf'
+    # urdf_name = 'mycar.urdf'
+    xacro_path = 'xacro/base.urdf'
 
     ld = LaunchDescription()
     pkg_share = FindPackageShare(package=package_name).find(package_name)
-    urdf_model_path = os.path.join(pkg_share, f'urdf/{urdf_name}')
+    urdf_model_path = os.path.join(pkg_share, f'urdf/{xacro_path}')
     default_rviz_config_path = os.path.join(pkg_share ,'rviz/urdf.rviz')
 
     rviz_arg = DeclareLaunchArgument(name='rvizconfig', default_value=str(default_rviz_config_path),
@@ -21,6 +22,7 @@ def generate_launch_description():
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
+        parameters=[{'robot_descrption': Command(['xacro ', urdf_model_path])}],
         arguments=[urdf_model_path]
     )
 
