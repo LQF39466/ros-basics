@@ -8,8 +8,7 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     package_name = 'simulation'
-    # urdf_name = 'mycar.urdf'
-    xacro_path = 'xacro/base.urdf'
+    xacro_path = 'car.urdf'
 
     ld = LaunchDescription()
     pkg_share = FindPackageShare(package=package_name).find(package_name)
