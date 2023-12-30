@@ -7,39 +7,41 @@ from launch.actions import DeclareLaunchArgument
 
 
 def generate_launch_description():
+    # Configure variables
     package_name = 'simulation'
-    xacro_path = 'car.urdf'
+    model_path = 'car.urdf'
 
-    ld = LaunchDescription()
+    # Setup project paths
     pkg_share = FindPackageShare(package=package_name).find(package_name)
-    urdf_model_path = os.path.join(pkg_share, f'urdf/{xacro_path}')
-    default_rviz_config_path = os.path.join(pkg_share ,'rviz/urdf.rviz')
+    abs_model_path = os.path.join(pkg_share, f'urdf/{model_path}')
 
-    rviz_arg = DeclareLaunchArgument(name='rvizconfig', default_value=str(default_rviz_config_path),
-                                     description='Absolute path to rviz config file')
+    # Declare rviz config
+    rviz_arg = DeclareLaunchArgument(
+        name='rvizconfig', 
+        default_value=str(os.path.join(pkg_share ,'rviz/urdf.rviz')),
+        description='Absolute path to rviz config file'
+    )
 
-    robot_state_publisher_node = Node(
+    # Create ROS Nodes
+    # Takes the description and joint angles as inputs and publishes the 3D poses of the robot links
+    robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        parameters=[{'robot_descrption': Command(['xacro ', urdf_model_path])}],
-        arguments=[urdf_model_path]
+        parameters=[{'robot_descrption': Command(['xacro ', abs_model_path])}],
+        arguments=[abs_model_path]
     )
 
-    joint_state_publisher_node = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        name='joint_state_publisher',
-        arguments=[urdf_model_path]
-    )
-
-    joint_state_publisher_gui_node = Node(
+    # For publishing and controlling the robot pose, we need joint states of the robot
+    # Configure the robot model by adjusting the joint angles using the GUI slider
+    joint_state_publisher_gui = Node(
         package='joint_state_publisher_gui',
         executable='joint_state_publisher_gui',
         name='joint_state_publisher_gui',
-        arguments=[urdf_model_path]
+        arguments=[abs_model_path]
     )
 
-    rviz2_node = Node(
+    # Visualize in RViz
+    rviz = Node(
         package='rviz2',
         executable='rviz2',
         name='rviz2',
@@ -47,10 +49,9 @@ def generate_launch_description():
         arguments=['-d', LaunchConfiguration('rvizconfig')]
     )
 
-    ld.add_action(rviz_arg)
-    ld.add_action(robot_state_publisher_node)
-    ld.add_action(joint_state_publisher_node)
-    ld.add_action(joint_state_publisher_gui_node)
-    ld.add_action(rviz2_node)
-
-    return ld
+    return LaunchDescription([
+        rviz_arg,
+        joint_state_publisher_gui,
+        robot_state_publisher,
+        rviz
+    ])
