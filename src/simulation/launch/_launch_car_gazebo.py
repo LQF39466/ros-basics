@@ -1,36 +1,49 @@
 import os
-
-from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.actions import IncludeLaunchDescription
-from launch.conditions import IfCondition
+from launch.substitutions import Command, LaunchConfiguration
+from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.actions import IncludeLaunchDescription
 
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # Configure ROS nodes for launch
+    # Configure variables
+    package_name = 'simulation'
+    model_path = 'car_gazebo.urdf'
 
     # Setup project paths
-    pkg_project_bringup = get_package_share_directory('ros_gz_example_bringup')
-    pkg_project_description = get_package_share_directory('ros_gz_example_description')
+    pkg_share = FindPackageShare(package=package_name).find(package_name)
+    pkg_ros_gz_sim = FindPackageShare(package='ros_gz_sim').find('ros_gz_sim')
+    abs_model_path = os.path.join(pkg_share, f'urdf/{model_path}')
 
-    # Load the SDF file from "description" package
-    sdf_file  =  os.path.join(pkg_project_description, 'models', 'rrbot', 'model.sdf')
-    with open(sdf_file, 'r') as infp:
-        robot_desc = infp.read()
+    # Declare rviz config
+    rviz_arg = DeclareLaunchArgument(
+        name='rvizconfig', 
+        default_value=str(os.path.join(pkg_share ,'rviz/urdf.rviz')),
+        description='Absolute path to rviz config file'
+    )
 
+    # Setup to launch the simulator and Gazebo world
+    gz_sim = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
+        launch_arguments={'gz_args': os.path.join(
+            pkg_share,
+            'gazebo/worlds',
+            'car.sdf'
+        )}.items(),
+    )
+    
     # For publishing and controlling the robot pose, we need joint states of the robot
     # Configure the robot model by adjusting the joint angles using the GUI slider
     joint_state_publisher_gui = Node(
         package='joint_state_publisher_gui',
         executable='joint_state_publisher_gui',
         name='joint_state_publisher_gui',
-        arguments=[sdf_file],
+        arguments=[abs_model_path],
         output=['screen']
     )
 
@@ -42,21 +55,30 @@ def generate_launch_description():
         output='both',
         parameters=[
             {'use_sim_time': True},
-            {'robot_description': robot_desc},
+            {'robot_description': Command(['xacro ', abs_model_path])}
         ]
     )
 
     # Visualize in RViz
     rviz = Node(
-       package='rviz2',
-       executable='rviz2',
-       arguments=['-d', os.path.join(pkg_project_bringup, 'config', 'rrbot.rviz')],
-       condition=IfCondition(LaunchConfiguration('rviz'))
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', LaunchConfiguration('rvizconfig')]
+    )
+
+    # Bridge ROS topics and Gazebo messages for establishing communication
+    bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        output='screen'
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('rviz', default_value='true',
-                              description='Open RViz.'),
+        gz_sim,
+        rviz_arg,
+        bridge,
         joint_state_publisher_gui,
         robot_state_publisher,
         rviz
