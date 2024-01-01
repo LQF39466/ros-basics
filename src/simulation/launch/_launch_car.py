@@ -27,7 +27,7 @@ def generate_launch_description():
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        parameters=[{'robot_descrption': Command(['xacro ', abs_model_path])}],
+        parameters=[{'robot_description': Command(['xacro ', abs_model_path])}],
         arguments=[abs_model_path]
     )
 
