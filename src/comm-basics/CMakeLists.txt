@@ -9,15 +9,26 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)  # 添加sensor_msgs的依赖项
+find_package(OpenCV REQUIRED)  # 添加对OpenCV的依赖项
+
+include_directories(${sensor_msgs_INCLUDE_DIRS})  # 添加sensor_msgs的包含目录
+include_directories(${OpenCV_INCLUDE_DIRS})  # 添加OpenCV的包含目录
+
 add_executable(talker src/publisher.cpp)
 ament_target_dependencies(talker rclcpp std_msgs)
+target_link_libraries(talker ${OpenCV_LIBRARIES} ${sensor_msgs_LIBRARIES})  # 链接OpenCV库以及sensor_msgs库
+
 add_executable(listener src/subscriber.cpp)
 ament_target_dependencies(listener rclcpp std_msgs)
+target_link_libraries(listener ${OpenCV_LIBRARIES} ${sensor_msgs_LIBRARIES})  # 链接OpenCV库以及sensor_msgs库
+
 
 install(TARGETS
   talker
   listener
   DESTINATION lib/${PROJECT_NAME})
+
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
