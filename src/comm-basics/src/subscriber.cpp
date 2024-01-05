@@ -1,4 +1,7 @@
+#include <chrono>
+#include <functional>
 #include <memory>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -7,6 +10,7 @@
 #include <opencv2/opencv.hpp>
 
 using std::placeholders::_1;
+using namespace std::chrono_literals;
 
 class TextVideoSubscriber : public rclcpp::Node
 {
@@ -47,7 +51,8 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<TextVideoSubscriber>());
+  auto subscriber = std::make_shared<TextVideoSubscriber>();
+  rclcpp::spin(subscriber);
   rclcpp::shutdown();
   return 0;
 }
