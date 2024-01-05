@@ -37,7 +37,7 @@ private:
 
   void video_timer_callback()
   {
-    cv::VideoCapture cap("video/simple.mp4"); // Replace with the path to your video file
+    cv::VideoCapture cap("src/comm-basics/video/simple.mp4"); // Replace with the path to your video file
 
     if (!cap.isOpened())
     {
