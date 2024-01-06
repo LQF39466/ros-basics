@@ -22,6 +22,9 @@ public:
       "text_topic", 10, std::bind(&TextVideoSubscriber::text_topic_callback, this, _1));
     video_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
       "video_topic", 10, std::bind(&TextVideoSubscriber::video_topic_callback, this, _1));
+    
+    cv::namedWindow("Video", cv::WINDOW_NORMAL); // Create a named window for video display
+    cv::startWindowThread(); // Start the thread for handling GUI events
   }
 
 private:
