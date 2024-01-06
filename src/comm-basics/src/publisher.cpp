@@ -37,7 +37,11 @@ private:
 
   void video_timer_callback()
   {
-    cv::VideoCapture cap("src/comm-basics/video/simple.mp4"); // Replace with the path to your video file
+    //std::string pcdFileName = ros::package::getPath("comm-basics") + "/video/simple.mp4";
+    //cv::VideoCapture cap(pcdFileName);
+    
+    static cv::VideoCapture cap("src/comm-basics/video/simple.mp4"); // Replace with the path to your video file
+    static cv::Mat frame;
 
     if (!cap.isOpened())
     {
@@ -45,13 +49,17 @@ private:
       return;
     }
 
-    cv::Mat frame;
     cap >> frame;
 
     if (frame.empty())
     {
-      RCLCPP_ERROR(this->get_logger(), "Failed to read video frame");
-      return;
+      cap.set(cv::CAP_PROP_POS_FRAMES, 0); // Reset video capture to the beginning
+      cap >> frame;
+      if (frame.empty())
+      {
+        RCLCPP_ERROR(this->get_logger(), "Failed to read video frame");
+        return;
+      }
     }
 
     std::unique_ptr<sensor_msgs::msg::Image> image_msg = std::make_unique<sensor_msgs::msg::Image>();
